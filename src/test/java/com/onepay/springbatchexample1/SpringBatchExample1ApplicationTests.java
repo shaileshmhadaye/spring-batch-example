@@ -1,4 +1,4 @@
-package com.techprimers.springbatchexample1;
+package com.onepay.springbatchexample1;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

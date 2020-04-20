@@ -1,6 +1,6 @@
-package com.techprimers.springbatchexample1.config;
+package com.onepay.springbatchexample1.config;
 
-import com.techprimers.springbatchexample1.model.User;
+import com.onepay.springbatchexample1.model.User;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -15,6 +15,7 @@ import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
@@ -23,25 +24,42 @@ import org.springframework.core.io.FileSystemResource;
 @EnableBatchProcessing
 public class SpringBatchConfig {
 
-    @Bean
-    public Job job(JobBuilderFactory jobBuilderFactory,
-                   StepBuilderFactory stepBuilderFactory,
-                   ItemReader<User> itemReader,
-                   ItemProcessor<User, User> itemProcessor,
-                   ItemWriter<User> itemWriter
-    ) {
+    @Autowired
+    private JobBuilderFactory jobBuilderFactory;
 
-        Step step = stepBuilderFactory.get("ETL-file-load")
-                .<User, User>chunk(100)
+    @Autowired
+    private StepBuilderFactory stepBuilderFactory;
+
+    @Autowired
+    private ItemReader<User> itemReader;
+    @Autowired
+    private ItemProcessor<User, User> itemProcessor;
+    @Autowired
+    private ItemWriter<User> itemWriter;
+
+    @Bean
+    public Step stepOne(){
+        return stepBuilderFactory.get("ETL-file-load")
+                .<User, User>chunk(2)
                 .reader(itemReader)
                 .processor(itemProcessor)
                 .writer(itemWriter)
                 .build();
+    }
 
+    @Bean
+    public Step stepTwo(){
+        return stepBuilderFactory.get("step two")
+                .tasklet(new MyTask())
+                .build();
+    }
 
-        return jobBuilderFactory.get("ETL-Load")
+    @Bean(name = "demoJobOne")
+    public Job job() {
+        return jobBuilderFactory.get("demoJobOne")
                 .incrementer(new RunIdIncrementer())
-                .start(step)
+                .start(stepOne())
+                .next(stepTwo())
                 .build();
     }
 
